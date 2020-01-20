@@ -5,9 +5,25 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: white;
+  background: rgb(85,139,47);
+  background: radial-gradient(circle, rgba(85,139,47,1) 0%, rgba(51,105,30,1) 100%);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+#root {
+  width: 100vw;
+  min-height: 100vh;
+}
+
+@font-face {
+  font-family: 'Bangers';
+  src: local('Bangers'), url(./assets/Bangers-Regular.ttf) format('truetype');
+}
+.app-title {
+  font-family: "Bangers", cursive;
 }
