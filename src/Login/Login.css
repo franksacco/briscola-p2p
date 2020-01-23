@@ -1,0 +1,32 @@
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-page__header {
+    margin-bottom: 10vh;
+}
+.login-page__header .app-title {
+    font-size: calc(42px + 5vmin);
+    text-shadow: 2px 1px 3px rgba(0,0,0,.8);
+}
+
+.login-page__main {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.login-page__main .login-page__main-box {
+    background-color: white;
+    color: black;
+    text-align: center;
+    border-radius: 8px;
+    -webkit-box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+    box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+}

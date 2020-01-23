@@ -1,0 +1,29 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: white;
+    background: #33691E;
+    background: radial-gradient(circle, #689F38 0%, #33691E 100%);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+#root {
+    width: 100vw;
+    min-height: 100vh;
+}
+
+@font-face {
+    font-family: 'Bangers';
+    src: local('Bangers'), url(Bangers-Regular.ttf) format('truetype');
+}
+.app-title {
+    font-family: "Bangers", cursive;
+}
