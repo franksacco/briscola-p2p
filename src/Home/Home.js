@@ -1,85 +1,139 @@
-import React from "react";
-import './Home.css';
+import React, {useState} from "react";
+import Peer from "peerjs";
 import Card from "react-bootstrap/Card";
-import {Controller, People, Person} from "react-bootstrap-icons";
 import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
+import {Controller, People, Person} from "react-bootstrap-icons";
+import RoomList from "../RoomList/RoomList";
+import Waiting from "../Waiting/Waiting";
+import Form from "react-bootstrap/Form";
 
 class Home extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            viewRoomList: false,
+            room: null
+        };
+
+        this.setViewRoomList = this.setViewRoomList.bind(this);
         this.setRoom = this.setRoom.bind(this);
     }
 
+    componentDidMount() {
+        this.peer = new Peer(null, {debug: 2});
+        this.peer.on('open', () => console.log("Peer connected with id: " + this.peer.id));
+    }
+
+    setViewRoomList(value = true) {
+        this.setState({viewRoomList: value});
+    }
+
     setRoom(room) {
-        this.props.setRoom(room);
+        room.masterId = this.peer.id;
+        this.setState({room: room});
     }
 
     render() {
+        if (this.state.viewRoomList) {
+            return <RoomList username={this.props.username} peer={this.peer} back={() => this.setViewRoomList(false)} />;
+
+        } else if (this.state.room) {
+            return <Waiting as="master" username={this.props.username} peer={this.peer} room={this.state.room} />;
+        }
+
         return (
-            <div className="start-page">
-                <header className="start-page__header">
-                    <span className="app-title">Briscola P2P</span><br/>
-                    <span className="username">Utente: <b>{this.props.username}</b></span>
+            <div className="page">
+                <header className="page__header">
+                    <span className="app-name">Briscola P2P</span><br/>
+                    <span className="user-name">Utente: <b>{this.props.username}</b></span>
                 </header>
-                <main className="start-page__main">
-                    <Main setRoom={this.setRoom}/>
-                </main>
+                <Main setRoom={this.setRoom} viewRoomList={this.setViewRoomList}/>
             </div>
         );
     }
 }
 export default Home;
 
-class Main extends React.Component {
-    constructor(props) {
-        super(props);
-        this.onClickButton = this.onClickButton.bind(this);
-    }
+function Main(props) {
+    const [numPlayers, setNumPlayers] = useState(null);
+    const [showDialog, setShowDialog] = useState(false);
 
-    onClickButton(numPlayers) {
-        // TODO use a dialog
-        const name = prompt("Inserisci il nome della stanza:");
-        this.props.setRoom({
-            name: name,
-            numPlayers: numPlayers
-        });
-    }
-
-    render() {
-        return (<>
-            <Card>
+    return (
+        <main className="page__main">
+            <Card style={{width: "240px", margin: "16px"}}>
                 <Card.Body>
                     <Card.Title>
-                        <Controller color="black" size="52"/>
+                        <Controller color="#33691E" size="52"/>
                     </Card.Title>
                     <Card.Text>
                         Partecipa ad una partita
                     </Card.Text>
-                    <Button type="button" onClick={() => {}}>Partecipa</Button>
+                    <Button type="button"
+                            onClick={props.viewRoomList}>Partecipa
+                    </Button>
                 </Card.Body>
             </Card>
-            <Card>
+            <Card style={{width: "240px", margin: "16px"}}>
                 <Card.Body>
                     <Card.Title>
-                        <Person color="primary" size="52"/>
+                        <Person color="#33691E" size="52"/>
                     </Card.Title>
                     <Card.Text>
                         Crea una partita per 2 giocatori
                     </Card.Text>
-                    <Button type="button" onClick={() => {this.onClickButton(2)}}>Crea</Button>
+                    <Button type="button"
+                            onClick={() => {setNumPlayers(2); setShowDialog(true);}}>Crea
+                    </Button>
                 </Card.Body>
             </Card>
-            <Card>
+            <Card style={{width: "240px", margin: "16px"}}>
                 <Card.Body>
                     <Card.Title>
-                        <People color="primary" size="52"/>
+                        <People color="#33691E" size="52"/>
                     </Card.Title>
                     <Card.Text>
                         Crea una partita per 4 giocatori
                     </Card.Text>
-                    <Button type="button" onClick={() => {this.onClickButton(4)}}>Crea</Button>
+                    <Button type="button"
+                            onClick={() => {setNumPlayers(4); setShowDialog(true);}}>Crea
+                    </Button>
                 </Card.Body>
             </Card>
-        </>);
-    }
+            <CreateRoomDialog
+                show={showDialog}
+                onHide={() => setShowDialog(false)}
+                onConfirm={() => {
+                    setShowDialog(false);
+                    props.setRoom({
+                        name: document.getElementById("room_name_input").value,
+                        numPlayers: numPlayers
+                    });
+                }}/>
+        </main>
+    );
+}
+
+function CreateRoomDialog(props) {
+    return (
+        <Modal show={props.show} onHide={props.onHide} aria-labelledby="modal-title" centered>
+            <Form onSubmit={props.onConfirm}>
+                <Modal.Header>
+                    <Modal.Title id="modal-title">
+                        Crea nuova partita
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form.Group controlId="room_name_input">
+                        <Form.Label>Specifica un nome per la partita:</Form.Label>
+                        <Form.Control type="text" placeholder="Nome partita" />
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button type="button" variant="secondary" onClick={props.onHide}>Annulla</Button>
+                    <Button type="submit" variant="primary">Conferma</Button>
+                </Modal.Footer>
+            </Form>
+        </Modal>
+    );
 }
