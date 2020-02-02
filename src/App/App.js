@@ -43,7 +43,6 @@ class LoginForm extends React.Component{
 
     onSubmit(e) {
         e.preventDefault();
-        e.stopPropagation();
         this.props.setUsername(document.getElementById('username').value);
     }
 
@@ -52,7 +51,7 @@ class LoginForm extends React.Component{
             <Card>
                 <Card.Header>Inserisci il tuo username</Card.Header>
                 <Card.Body>
-                    <Form onSubmit={this.onSubmit}>
+                    <Form onSubmit={e => this.onSubmit(e)}>
                         <Form.Group>
                             <Form.Control id="username" type="text" placeholder="Username" required/>
                         </Form.Group>

@@ -10,39 +10,50 @@ class Waiting extends React.Component {
         super(props);
         this.state = {
             playersReady: false,
-            connections: []
+            otherPeers: []
         };
         this.deleteRoom = this.deleteRoom.bind(this);
     }
 
     componentDidMount() {
         if (this.props.as === "master") {
+            // Creazione partita sul server.
             $.post({
                 url: "http://localhost:3003/rooms/add",
                 data: JSON.stringify(this.props.room),
                 dataType: 'json',
-                success: (data) => console.log(data)
+                success: data => console.log(data)
             });
 
-            this.props.peer.on('connection', c => {
-                if (this.state.connections.length >= this.props.room.numPlayers - 1) {
+            this.props.peer.on('connection', conn => {
+                if (this.state.otherPeers.length >= this.props.room.numPlayers - 1) {
                     // Rifiuto nuova connessione.
-                    console.log("Connection with peer " + c.peer + " refused");
-                    c.close();
+                    console.log("Connection with peer " + conn.peer + " refused");
+                    conn.close();
                     return;
                 }
 
-                console.log("Connection from: " + c.peer);
-                c.on('open', () => {
-                    let connections = this.state.connections;
-                    connections.push(c);
-                    let state = {connections: connections};
+                console.log("Connection from: " + conn.peer);
+                conn.on('open', () => {
+                    let otherPeers = this.state.otherPeers;
+                    otherPeers.push({
+                        id: otherPeers.length + 1,
+                        connection: conn
+                    });
+                    let state = {otherPeers: otherPeers};
 
-                    if (connections.length === this.props.room.numPlayers - 1) {
-                        connections.forEach(conn => {
-                            conn.send(JSON.stringify({
+                    if (otherPeers.length === this.props.room.numPlayers - 1) {
+                        // Raggiunto il numero di giocatori richiesto.
+                        otherPeers.forEach(peer => {
+                            // Invio informazioni degli altri peer.
+                            peer.connection.send(JSON.stringify({
                                 type: TYPE_PLAYERS_READY,
-                                data: connections.map(c => c.peer)
+                                data: otherPeers.map(peer => {
+                                    return {
+                                        id: peer.id,
+                                        peerId: peer.connection.peer
+                                    }
+                                })
                             }));
                         });
                         state = {
@@ -54,27 +65,106 @@ class Waiting extends React.Component {
 
                     this.setState(state);
                 });
+                conn.on('error', (error) => {
+                    console.log(error);
+                });
             });
 
         } else {
             this.props.masterConn.on('data', data => {
                 const msg = JSON.parse(data);
                 if (msg.type === TYPE_PLAYERS_READY) {
-                    let connections = msg.data
-                        .filter(peerId => peerId !== this.props.peer.id)
-                        .map(peerId => {
-                            let conn = this.props.peer.connect(peerId);
-                            conn.on('open', () => console.log("Connected with peer " + conn.peer));
-                            return conn;
+
+                    // Lista degli id degli altri peer tranne il master.
+                    let otherPeers = msg.data.filter(peer => peer.peerId !== this.props.peer.id);
+                    // Lista delle connessioni con gli altri peer.
+                    let otherPeersConnections = [
+                        {id: 0, connection: this.props.masterConn}
+                    ];
+                    if (otherPeersConnections.length === otherPeers.length + 1) {
+                        // Abbiamo raggiunto il numero di connessioni necessarie,
+                        // possiamo procedere alla Game Board.
+                        this.setState({
+                            playersReady: true,
+                            otherPeers: otherPeersConnections
                         });
-                    connections.push(this.props.masterConn);
-                    this.setState({
-                        playersReady: true,
-                        connections: connections
+                        return;
+                    }
+
+                    // Effettuiamo ID - 1 connessioni agli altri peer a partire dal primo.
+                    const myId = this._calculateMyId(otherPeers);
+                    for (let i = 0; i < myId - 1; i++) {
+                        let conn = this.props.peer.connect(otherPeers[i].peerId);
+                        conn.on('open', () => {
+
+                            console.log("Connected with peer " + conn.peer);
+                            otherPeersConnections.push({
+                                id: otherPeers[i].id,
+                                connection: conn
+                            });
+
+                            if (otherPeersConnections.length === otherPeers.length + 1) {
+                                // Abbiamo raggiunto il numero di connessioni necessarie,
+                                // possiamo procedere alla Game Board.
+                                this.setState({
+                                    playersReady: true,
+                                    otherPeers: otherPeersConnections
+                                });
+                            }
+                        });
+                        conn.on('error', (error) => {
+                            console.log(error);
+                        });
+                    }
+
+                    this.props.peer.on('connection', conn => {
+                        if (otherPeersConnections.length >= otherPeers.length + 1) {
+                            console.log("Error: too many connections");
+                            conn.close();
+                            return;
+                        }
+                        let otherPeer = otherPeers.filter(peer => conn.peer === peer.peerId);
+                        if (otherPeer.length === 0) {
+                            console.log("Error: invalid peer");
+                            conn.close();
+                            return;
+                        }
+                        let otherPeerId = otherPeer[0].id;
+
+                        console.log("Connection from: " + conn.peer);
+                        conn.on('open', () => {
+
+                            otherPeersConnections.push({
+                                id: otherPeerId,
+                                connection: conn
+                            });
+
+                            if (otherPeersConnections.length === otherPeers.length + 1) {
+                                // Abbiamo raggiunto il numero di connessioni necessarie,
+                                // possiamo procedere alla Game Board.
+                                this.setState({
+                                    playersReady: true,
+                                    otherPeers: otherPeersConnections
+                                });
+                            }
+                        });
+                        conn.on('error', (error) => {
+                            console.log(error);
+                        });
                     });
                 }
             });
+            // TODO remove listener
         }
+    }
+
+    _calculateMyId(otherPeers) {
+        // Id degli altri peer.
+        const otherPeerIds = otherPeers.map(peer => peer.id);
+        // Tutti gli id disponibili.
+        const ids = [...Array(otherPeers.length + 1).keys()].map(id => id + 1);
+        // Manteniamo solo quelli non presenti negli altri peer.
+        return ids.filter(id => ! otherPeerIds.includes(id))[0];
     }
 
     deleteRoom() {
@@ -88,17 +178,20 @@ class Waiting extends React.Component {
 
     componentWillUnmount() {
         if (this.props.as === "master") {
+            // TODO bottone annulla partita
             this.deleteRoom();
         }
     }
 
     render() {
         if (this.state.playersReady) {
-            return <GameBoard connections={this.state.connections} />;
+            return <GameBoard master={this.props.as === "master"}
+                              otherPeers={this.state.otherPeers}
+                              back={() => this.props.back()} />;
         }
 
         let msg = this.props.as === "master" ?
-            "In attesa di " + (this.props.room.numPlayers - this.state.connections.length - 1) + " giocatori...":
+            "In attesa di " + (this.props.room.numPlayers - this.state.otherPeers.length - 1) + " giocatori...":
             "In attesa dei giocatori...";
         return (
             <div className="page">

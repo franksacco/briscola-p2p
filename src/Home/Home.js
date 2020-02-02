@@ -21,7 +21,7 @@ class Home extends React.Component {
     }
 
     componentDidMount() {
-        this.peer = new Peer(null, {debug: 2});
+        this.peer = new Peer(null, {host: 'localhost', port: 9000});
         this.peer.on('open', () => console.log("Peer connected with id: " + this.peer.id));
     }
 
@@ -34,12 +34,25 @@ class Home extends React.Component {
         this.setState({room: room});
     }
 
+    back() {
+        this.setState({
+            viewRoomList: false,
+            room: null
+        });
+    }
+
     render() {
         if (this.state.viewRoomList) {
-            return <RoomList username={this.props.username} peer={this.peer} back={() => this.setViewRoomList(false)} />;
+            return <RoomList username={this.props.username}
+                             peer={this.peer}
+                             back={() => this.back()} />;
 
         } else if (this.state.room) {
-            return <Waiting as="master" username={this.props.username} peer={this.peer} room={this.state.room} />;
+            return <Waiting as="master"
+                            username={this.props.username}
+                            peer={this.peer}
+                            room={this.state.room}
+                            back={() => this.back()}/>;
         }
 
         return (
@@ -48,7 +61,8 @@ class Home extends React.Component {
                     <span className="app-name">Briscola P2P</span><br/>
                     <span className="user-name">Utente: <b>{this.props.username}</b></span>
                 </header>
-                <Main setRoom={this.setRoom} viewRoomList={this.setViewRoomList}/>
+                <Main setRoom={(room) => this.setRoom(room)}
+                      viewRoomList={() => this.setViewRoomList()}/>
             </div>
         );
     }
@@ -70,7 +84,7 @@ function Main(props) {
                         Partecipa ad una partita
                     </Card.Text>
                     <Button type="button"
-                            onClick={props.viewRoomList}>Partecipa
+                            onClick={() => props.viewRoomList()}>Partecipa
                     </Button>
                 </Card.Body>
             </Card>
@@ -103,7 +117,8 @@ function Main(props) {
             <CreateRoomDialog
                 show={showDialog}
                 onHide={() => setShowDialog(false)}
-                onConfirm={() => {
+                onConfirm={(e) => {
+                    e.preventDefault();
                     setShowDialog(false);
                     props.setRoom({
                         name: document.getElementById("room_name_input").value,
@@ -116,8 +131,8 @@ function Main(props) {
 
 function CreateRoomDialog(props) {
     return (
-        <Modal show={props.show} onHide={props.onHide} aria-labelledby="modal-title" centered>
-            <Form onSubmit={props.onConfirm}>
+        <Modal show={props.show} onHide={() => props.onHide()} aria-labelledby="modal-title" centered>
+            <Form onSubmit={e => props.onConfirm(e)}>
                 <Modal.Header>
                     <Modal.Title id="modal-title">
                         Crea nuova partita
@@ -130,7 +145,7 @@ function CreateRoomDialog(props) {
                     </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button type="button" variant="secondary" onClick={props.onHide}>Annulla</Button>
+                    <Button type="button" variant="secondary" onClick={() => props.onHide()}>Annulla</Button>
                     <Button type="submit" variant="primary">Conferma</Button>
                 </Modal.Footer>
             </Form>

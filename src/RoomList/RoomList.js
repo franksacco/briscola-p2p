@@ -4,29 +4,27 @@ import Card from "react-bootstrap/Card";
 import Spinner from "react-bootstrap/Spinner";
 import Button from "react-bootstrap/Button";
 import Waiting from "../Waiting/Waiting";
+import Alert from "react-bootstrap/Alert";
 
 class RoomList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            waiting: false,
-            isLoading: true,
+            waiting: false, // Waiting for game start.
+            loading: true,  // Loading room list.
+            error: null,
             rooms: []
         };
         this.onClickJoin = this.onClickJoin.bind(this);
     }
 
     componentDidMount() {
-        $.get({
-            url: "http://localhost:3003/rooms/list",
-            success: (data) => {
-                console.log(data);
-                this.setState({
-                    isLoading: false,
-                    rooms: data
-                });
-            }
-        });
+        $.get(
+            "http://localhost:3003/rooms/list",
+            data => this.setState({rooms: data})
+        )
+        .fail(err => this.setState({error: err}))
+        .always(() => this.setState({loading: false}));
     }
 
     onClickJoin(room) {
@@ -40,7 +38,6 @@ class RoomList extends React.Component {
         });
         conn.on('error', (error) => {
             console.log(error);
-            alert("Impossibile connettersi alla partita");
         });
     }
 
@@ -52,20 +49,26 @@ class RoomList extends React.Component {
                     username={this.props.username}
                     peer={this.props.peer}
                     masterConn={this.state.connection}
+                    back={() => this.props.back()}
                 />
             );
         }
 
         let rooms;
-        if (this.state.isLoading) {
+        if (this.state.loading) {
             rooms = <Spinner animation="border" variant="primary"/>;
+
+        } else if (this.state.error) {
+            rooms = <Alert variant="danger">Impossibile connettersi con il server</Alert>;
 
         } else if (this.state.rooms.length === 0) {
             rooms = <i className="text-muted">Nessuna partita disponibile</i>;
 
         } else {
             rooms = this.state.rooms.map((room, index) => {
-                return <Room room={room} key={index} onClick={this.onClickJoin} />;
+                return <Room room={room}
+                             key={index}
+                             onClick={room => this.onClickJoin(room)} />;
             });
         }
 
