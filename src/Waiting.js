@@ -2,8 +2,8 @@ import React from "react";
 import $ from "jquery";
 import Card from "react-bootstrap/Card";
 import Spinner from "react-bootstrap/Spinner";
-import GameBoard from "../GameBoard/GameBoard";
-import {TYPE_PLAYERS_READY} from "../Utility/Message";
+import GameBoard from "./GameBoard/GameBoard";
+import {TYPE_PLAYERS_READY} from "./Utility/MessageTypes";
 
 class Waiting extends React.Component {
     constructor(props) {
@@ -51,6 +51,7 @@ class Waiting extends React.Component {
                                 data: otherPeers.map(peer => {
                                     return {
                                         id: peer.id,
+                                        username: 'username', // TODO change
                                         peerId: peer.connection.peer
                                     }
                                 })
@@ -65,9 +66,6 @@ class Waiting extends React.Component {
 
                     this.setState(state);
                 });
-                conn.on('error', (error) => {
-                    console.log(error);
-                });
             });
 
         } else {
@@ -79,7 +77,7 @@ class Waiting extends React.Component {
                     let otherPeers = msg.data.filter(peer => peer.peerId !== this.props.peer.id);
                     // Lista delle connessioni con gli altri peer.
                     let otherPeersConnections = [
-                        {id: 0, connection: this.props.masterConn}
+                        {id: 0, username:'username', connection: this.props.masterConn}
                     ];
                     if (otherPeersConnections.length === otherPeers.length + 1) {
                         // Abbiamo raggiunto il numero di connessioni necessarie,
@@ -100,6 +98,7 @@ class Waiting extends React.Component {
                             console.log("Connected with peer " + conn.peer);
                             otherPeersConnections.push({
                                 id: otherPeers[i].id,
+                                username: otherPeers[i].username,
                                 connection: conn
                             });
 
@@ -111,9 +110,6 @@ class Waiting extends React.Component {
                                     otherPeers: otherPeersConnections
                                 });
                             }
-                        });
-                        conn.on('error', (error) => {
-                            console.log(error);
                         });
                     }
 
@@ -129,13 +125,13 @@ class Waiting extends React.Component {
                             conn.close();
                             return;
                         }
-                        let otherPeerId = otherPeer[0].id;
 
                         console.log("Connection from: " + conn.peer);
                         conn.on('open', () => {
 
                             otherPeersConnections.push({
-                                id: otherPeerId,
+                                id: otherPeer[0].id,
+                                username: otherPeer[0].username,
                                 connection: conn
                             });
 
@@ -148,13 +144,9 @@ class Waiting extends React.Component {
                                 });
                             }
                         });
-                        conn.on('error', (error) => {
-                            console.log(error);
-                        });
                     });
                 }
             });
-            // TODO remove listener
         }
     }
 
@@ -187,7 +179,7 @@ class Waiting extends React.Component {
         if (this.state.playersReady) {
             return <GameBoard master={this.props.as === "master"}
                               otherPeers={this.state.otherPeers}
-                              back={() => this.props.back()} />;
+                              username={this.props.username} />;
         }
 
         let msg = this.props.as === "master" ?

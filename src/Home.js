@@ -4,8 +4,8 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import {Controller, People, Person} from "react-bootstrap-icons";
-import RoomList from "../RoomList/RoomList";
-import Waiting from "../Waiting/Waiting";
+import RoomList from "./RoomList";
+import Waiting from "./Waiting";
 import Form from "react-bootstrap/Form";
 
 class Home extends React.Component {
@@ -23,6 +23,7 @@ class Home extends React.Component {
     componentDidMount() {
         this.peer = new Peer(null, {host: 'localhost', port: 9000});
         this.peer.on('open', () => console.log("Peer connected with id: " + this.peer.id));
+        this.peer.on('error', err => console.log("Peer error: " + err));
     }
 
     setViewRoomList(value = true) {

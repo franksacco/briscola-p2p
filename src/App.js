@@ -1,9 +1,10 @@
 import React from "react";
-import '../assets/bootstrap.scss'
+import './assets/bootstrap.scss'
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import Home from "../Home/Home";
+import Home from "./Home";
+
 
 class App extends React.Component {
     constructor(props) {

@@ -3,7 +3,7 @@ import $ from "jquery";
 import Card from "react-bootstrap/Card";
 import Spinner from "react-bootstrap/Spinner";
 import Button from "react-bootstrap/Button";
-import Waiting from "../Waiting/Waiting";
+import Waiting from "./Waiting";
 import Alert from "react-bootstrap/Alert";
 
 class RoomList extends React.Component {
