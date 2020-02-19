@@ -7,8 +7,7 @@
 }
 
 .board .briscola-card {
-    height: 100%;
-    max-height: 25vh;
+    height: 25vh;
     margin: 0 2vmin;
     padding: calc(4px + .5vh);
     background-color: white;
@@ -21,11 +20,11 @@
 .board .state {
     position: absolute;
     top: 2vmin;
-    padding: 2vmin 3vmin;
-    background-color: rgba(0, 0, 0, .8);
+    padding: 1rem 1.5rem;
+    background-color: rgba(0, 0, 0, .7);
     color: white;
     font-size: 1.25rem;
-    border-radius: 16px;
+    border-radius: 1.625em;
     z-index: 5;
 }
 
@@ -33,15 +32,38 @@
     position: absolute;
     top: 2vmin;
     left: 2vmin;
-    height: 300px;
-    width: 300px;
+}
+
+.board .deck .deck-image {
+    position: absolute;
+    max-width: calc(25vh + 20px);
+    z-index: 2;
+}
+
+.board .deck .briscola-card {
+    position: absolute;
+    top: 5vh;
+    left: 6.5vh;
+    margin: 0;
+    transform: rotate(180deg);
+    z-index: 1;
+}
+
+.board .deck .cards-counter {
+    position: absolute;
+    top: 5vh;
+    left: 11vh;
+    padding: calc(.75rem + 0.5vh);
+    background-color: rgba(0, 0, 0, .7);
+    border-radius: 50%;
+    font-size: calc(.75rem + 0.5vh);
+    font-weight: bold;
+    line-height: calc(.75rem + 0.5vh);
+    text-align: center;
+    z-index: 3;
 }
 
 .board .played-cards {
-    width: 680px;
-    max-width: 96vw;
-    height: 300px;
-    max-height: 33vh;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -51,10 +73,6 @@
 .board .my-cards {
     position: absolute;
     bottom: 2vmin;
-    width: 600px;
-    max-width: 96vw;
-    height: 300px;
-    max-height: 33vh;
     display: flex;
     flex-direction: row;
     align-items: center;

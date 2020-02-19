@@ -32,7 +32,6 @@ http.createServer((request, response) => {
         });
         request.on('end', () => {
             const data = JSON.parse(body);
-            // TODO: controlli
             rooms.push(new Room(data.name, data.numPlayers, data.masterId));
             console.log(rooms);
 

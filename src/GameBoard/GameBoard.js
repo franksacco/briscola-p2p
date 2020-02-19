@@ -1,13 +1,14 @@
 import React, {useState} from "react";
 import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import InputGroup from "react-bootstrap/InputGroup";
 import Modal from "react-bootstrap/Modal";
 import Spinner from "react-bootstrap/Spinner";
 
-import './GameBoard.css';
 import SecureMatch from "../Utility/SecureMatch";
-import Form from "react-bootstrap/Form";
 import Chat from "../Utility/Chat";
-import InputGroup from "react-bootstrap/InputGroup";
+import './GameBoard.css';
+import deck_image from '../assets/cards/deck.png';
 
 
 class GameBoard extends React.Component {
@@ -29,6 +30,7 @@ class GameBoard extends React.Component {
         super(props);
         /**
          * @type {{briscola: Card?,
+         *   cardsCounter: number,
          *   isMyRound: boolean,
          *   cards: Card[],
          *   roundCards: PlayedCard[],
@@ -39,6 +41,7 @@ class GameBoard extends React.Component {
          */
         this.state = {
             briscola: null,
+            cardsCounter: 40 - 3 * (props.otherPeers.length + 1),
             isMyRound: this.props.master,
             cards: [],
             roundCards: [],
@@ -79,7 +82,7 @@ class GameBoard extends React.Component {
             // Ritardo necessario per essere sicuri che le carte di
             // questo turno siano state cancellate.
             this.setState({isMyRound: true});
-        }, 2000);
+        }, 1500);
     }
 
     /**
@@ -106,6 +109,11 @@ class GameBoard extends React.Component {
      * Segnala alla board la fine del turno.
      */
     roundEnd() {
+        if (this.state.cardsCounter > 0) {
+            this.setState({
+                cardsCounter: this.state.cardsCounter - (this.props.otherPeers.length + 1)
+            });
+        }
         setTimeout(() => {
             // Ritardo necessario per poter visualizzare la carta
             // giocata dall'avversario.
@@ -207,7 +215,13 @@ class GameBoard extends React.Component {
                     {this.state.isMyRound ? "Tocca a te" : "In attesa degli avversari..."}
                 </div>
                 <div className="deck">
+                    <img className="deck-image"
+                         src={deck_image}
+                         alt="Mazzo"/>
                     <Card card={this.state.briscola} />
+                    <div className="cards-counter">
+                        {this.state.cardsCounter}
+                    </div>
                 </div>
                 <div className="played-cards">
                     {playedCards}

@@ -1,6 +1,6 @@
 import Card, {PlayedCard} from "./Card";
 import Deck from "./Deck";
-import {TYPE_CARD_PLAYED, TYPE_INIT_DECK} from "./MessageTypes";
+import {TYPE_CARD_PLAYED, TYPE_INIT_DECK, TYPE_MALICIOUS_PEER} from "./MessageTypes";
 
 
 class Match {
@@ -51,7 +51,7 @@ class Match {
      * @var {Card[]}
      * @protected
      */
-    _deck;
+    _deck = [];
 
     /**
      * ID del peer che deve giocare.
@@ -119,12 +119,14 @@ class Match {
         // Gestione degli errori della connessione.
         connection.on('error', error => {
             console.error(error);
-            this.handleError("Errore di comunicazione");
+            this._handleError("Errore di comunicazione");
         });
 
         // Gestione della chiusura della connessione.
         connection.on('close', () => {
-            this.handleError("La connessione con un altro utente si è interrotta");
+            if (this._deck.length > 0 || this._cards.length > 0) {
+                this._handleError("La connessione con un altro utente si è interrotta");
+            }
         });
     }
 
@@ -141,7 +143,10 @@ class Match {
             case TYPE_CARD_PLAYED:
                 const playedCard = new PlayedCard(message.data.id, message.data.playerId);
                 if (this._playedCards.includes(playedCard)) {
-                    this.handleError("Un avversario ha giocato una carta vecchia");
+                    this._broadcast(TYPE_MALICIOUS_PEER, {
+                        error: "Un avversario ha giocato una carta vecchia"
+                    });
+                    this._handleError("Un avversario ha giocato una carta vecchia");
                     break;
                 }
                 this._playedCards.push(playedCard);
@@ -160,6 +165,10 @@ class Match {
                 }
                 break;
 
+            case TYPE_MALICIOUS_PEER:
+                this._handleError("Un utente sta cercando di barare: " + message.data.error);
+                break;
+
             default:  // Do nothing.
         }
     }
@@ -167,8 +176,9 @@ class Match {
     /**
      * Gestione degli errori di connessione.
      * @param error {string}
+     * @protected
      */
-    handleError(error) {
+    _handleError(error) {
         this._board.setError(error);
     }
 
@@ -259,6 +269,10 @@ class Match {
         }
     }
 
+    /**
+     * Esecuzione del termine del turno.
+     * @protected
+     */
     _roundEnd() {
         const winner = Deck.roundWinner(this._roundCards, this._briscola.getSeed());
         console.log("Mano vinta da " + winner);

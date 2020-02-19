@@ -1,8 +1,15 @@
 import Match from "./Match";
-import {TYPE_CRYPTO_BRISCOLA, TYPE_CRYPTO_CARD, TYPE_CRYPTO_DECK, TYPE_INIT_DECK} from "./MessageTypes";
+import {
+    TYPE_CRYPTO_BRISCOLA,
+    TYPE_CRYPTO_CARD,
+    TYPE_CRYPTO_DECK,
+    TYPE_INIT_DECK, TYPE_MALICIOUS_PEER,
+    TYPE_PRIMES_AGREEMENT
+} from "./MessageTypes";
 import Deck from "./Deck";
 import SRA from "./SRA";
 import Card from "./Card";
+
 
 class SecureMatch extends Match {
     /**
@@ -20,23 +27,25 @@ class SecureMatch extends Match {
     _sra;
 
     /**
-     * Inizializzazione della partita.
-     * @param board {GameBoard} Riferimento alla game board.
-     * @param otherPeers {{id: number, connection: DataConnection}[]} Lista delle connessioni con gli altri peer.
+     * Countdown di decriptazioni disponibili del turno.
+     * @type {number}
+     * @private
      */
-    constructor(board, otherPeers) {
-        super(board, otherPeers);
-        this._sra = SRA.generate();
-    }
+    _numDecriptions = 0;
 
     /**
      * Gestione della ricezione di un messaggio.
      * @param message {{type: number, data: *}}
      */
     handleMessage(message) {
-        // TODO: conteggio numero di decriptazioni per turno.
-
         switch (message.type) {
+            case TYPE_PRIMES_AGREEMENT:
+                this._sra = new SRA(
+                    message.data.p,
+                    message.data.q
+                );
+                break;
+
             case TYPE_CRYPTO_DECK:
                 this._handleCryptoDeck(message.data);
                 break;
@@ -64,11 +73,10 @@ class SecureMatch extends Match {
         const nextId = (this._id + 1) % (this._otherPeers.length + 1);
         const peers = this._otherPeers.filter(peer => peer.id === nextId);
         if (peers.length === 1) {
-            const msg = {
+            peers[0].connection.send(JSON.stringify({
                 type: type,
                 data: data
-            };
-            peers[0].connection.send(JSON.stringify(msg));
+            }));
         }
     }
 
@@ -77,15 +85,26 @@ class SecureMatch extends Match {
      * Azione effettuate solo dal master peer.
      */
     initDeck() {
+        // Inizializzazione di SRA e distrubuzione dei parametri p e q.
+        this._sra = SRA.generate();
+        this._broadcast(TYPE_PRIMES_AGREEMENT, {
+            p: this._sra.getP(),
+            q: this._sra.getQ()
+        });
+
+        // Inizializzazione del mazzo.
         let deck = Deck.create();
         deck = deck.map(card => this._encryptCard(card.getId()));
         Deck.shuffle(deck);
 
-        const data = {
-            counter: 1,  // Contatore delle volte in cui il mazzo è stato criptato.
-            deck: deck
-        };
-        this._sendToNextPlayer(TYPE_CRYPTO_DECK, data);
+        setTimeout(() => {
+            // Ritardo nell'invio del mazzo per essere
+            // certi dell'inizializzazione di SRA.
+            this._sendToNextPlayer(TYPE_CRYPTO_DECK, {
+                counter: 1,  // Contatore delle volte in cui il mazzo è stato criptato.
+                deck: deck
+            });
+        }, 500);
     }
 
     /**
@@ -120,6 +139,10 @@ class SecureMatch extends Match {
     _initMatch(deck) {
         this._deck = deck;
 
+        // Nella fase iniziale dovranno essere decriptate tre carte
+        // per giocatore più la briscola.
+        this._numDecriptions = 4 * this._getMaxDecriptions();
+
         // Invio della prima carta del mazzo per la decriptazione.
         this._sendToNextPlayer(TYPE_CRYPTO_BRISCOLA, {
             counter: 0,  // Numero di decriptazioni.
@@ -151,6 +174,16 @@ class SecureMatch extends Match {
      * @private
      */
     _handleCryptoBriscola(msg) {
+        // Controllo del numero di decriptazioni al turno.
+        this._numDecriptions--;
+        if (this._numDecriptions < 0) {
+            this._broadcast(TYPE_MALICIOUS_PEER, {
+                error: "Limite decriptazioni superato"
+            });
+            this._handleError("Limite decriptazioni superato");
+            return;
+        }
+
         let briscola = this._decryptCard(msg.briscola);
         if (msg.counter === this._otherPeers.length) {
             // Briscola decriptata da tutti i peer.
@@ -172,6 +205,16 @@ class SecureMatch extends Match {
      * @private
      */
     _handleCryptoCard(msg) {
+        // Controllo del numero di decriptazioni al turno.
+        this._numDecriptions--;
+        if (this._numDecriptions < 0) {
+            this._broadcast(TYPE_MALICIOUS_PEER, {
+                error: "Limite decriptazioni superato"
+            });
+            this._handleError("Limite decriptazioni superato");
+            return;
+        }
+
         let card = this._decryptCard(msg.card);
         if (msg.counter === this._otherPeers.length) {
             // Carta decriptata da tutti i peer.
@@ -186,6 +229,15 @@ class SecureMatch extends Match {
                 card: card
             });
         }
+    }
+
+    /**
+     * Esecuzione del termine del turno.
+     * @protected
+     */
+    _roundEnd() {
+        this._numDecriptions = this._getMaxDecriptions();
+        super._roundEnd();
     }
 
     /**
@@ -227,6 +279,10 @@ class SecureMatch extends Match {
      */
     _decryptCard(cardId) {
         return this._sra.decrypt(cardId);
+    }
+
+    _getMaxDecriptions() {
+        return this._otherPeers.length + 1;
     }
 }
 export default SecureMatch;
