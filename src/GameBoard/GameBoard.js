@@ -9,6 +9,7 @@ import SecureMatch from "../Utility/SecureMatch";
 import Chat from "../Utility/Chat";
 import './GameBoard.css';
 import deck_image from '../assets/cards/deck.png';
+import Badge from "react-bootstrap/Badge";
 
 
 class GameBoard extends React.Component {
@@ -18,6 +19,13 @@ class GameBoard extends React.Component {
      * @private
      */
     _match;
+
+    /**
+     * Array associativo degli username.
+     * @type {{}}
+     * @private
+     */
+    _usernames = {};
 
     /**
      * Riferimento al gestore della chat.
@@ -36,7 +44,8 @@ class GameBoard extends React.Component {
          *   roundCards: PlayedCard[],
          *   matchEnd: boolean,
          *   score: number,
-         *   chatMessages: {username: string, text: string}[],
+         *   chatMessages: {playerId: number, text: string}[],
+         *   unreadMessages: number,
          *   error: null|string}}
          */
         this.state = {
@@ -48,6 +57,7 @@ class GameBoard extends React.Component {
             matchEnd: false,
             score: 0,
             chatMessages: [],
+            unreadMessages: 0,
             error: null
         };
         this._onCardClicked = this._onCardClicked.bind(this);
@@ -63,7 +73,13 @@ class GameBoard extends React.Component {
             }, 1000);
         }
 
-        this._chat = new Chat(this, this.props.otherPeers, this.props.username);
+        // Creazione dell'array associativo con gli username.
+        this.props.otherPeers.forEach(peer => {
+            this._usernames[peer.id] = peer.username;
+        });
+        this._usernames[this._match.getMyId()] = this.props.username;
+
+        this._chat = new Chat(this, this.props.otherPeers, this._match.getMyId());
     }
 
     /**
@@ -76,13 +92,19 @@ class GameBoard extends React.Component {
 
     /**
      * Imposta il proprio turno.
+     * @param delay {boolean}
      */
-    setIsMyRound() {
-        setTimeout(() => {
-            // Ritardo necessario per essere sicuri che le carte di
-            // questo turno siano state cancellate.
+    setIsMyRound(delay = false) {
+        if (delay) {
+            setTimeout(() => {
+                // Ritardo necessario per essere sicuri che le carte di
+                // questo turno siano state cancellate.
+                this.setState({isMyRound: true});
+            }, 2000);
+
+        } else {
             this.setState({isMyRound: true});
-        }, 1500);
+        }
     }
 
     /**
@@ -133,24 +155,37 @@ class GameBoard extends React.Component {
     }
 
     /**
-     * Aggiungi un messaggio della chat.
-     * @param username {string}
+     * Aggiungi un messaggio alla chat.
+     * @param playerId {number}
      * @param text {string}
      */
-    addMessage(username, text) {
+    addMessage(playerId, text) {
         let chatMessages = this.state.chatMessages;
         chatMessages.push({
-            username: username,
+            playerId: playerId,
             text: text
         });
-        this.setState({chatMessages: chatMessages});
+        this.setState({
+            chatMessages: chatMessages,
+            unreadMessages: this.state.unreadMessages + 1
+        });
 
+        // Riporta il focus in fondo all'elemento.
         let el = document.getElementById('chat-messages');
         el.scrollTop = el.scrollHeight;
     }
 
     /**
-     * Mostra il messaggio ed interropi la partita.
+     * Azzera il numero di messaggi non letti.
+     */
+    setMessagesRead() {
+        this.setState({
+            unreadMessages: 0
+        });
+    }
+
+    /**
+     * Mostra il messaggio ed interrope la partita.
      * @param error {string}
      */
     setError(error) {
@@ -206,7 +241,12 @@ class GameBoard extends React.Component {
         });
 
         let playedCards = this.state.roundCards.map((playedCard, i) => {
-            return <Card key={i} card={playedCard} />;
+            return (<div key={i} className="card-container">
+                <Card card={playedCard}/>
+                <div className="card-player">
+                    {this._usernames[playedCard.getPlayerId()]}
+                </div>
+            </div>);
         });
 
         return (<>
@@ -229,7 +269,12 @@ class GameBoard extends React.Component {
                 <div className="my-cards">
                     {cards}
                 </div>
-                <ChatComponent chat={this._chat} messages={this.state.chatMessages}/>
+                <ChatComponent
+                    usernames={this._usernames}
+                    chat={this._chat}
+                    messages={this.state.chatMessages}
+                    unreadMessages={this.state.unreadMessages}
+                    setMessageRead={() => this.setMessagesRead()} />
             </div>
             <EndMatchModal
                 show={this.state.matchEnd}
@@ -256,6 +301,9 @@ function Card(props) {
 function ChatComponent(props) {
     const [visible, setVisible] = useState(false);
 
+    // Reset dei messaggi non letti.
+    visible && props.unreadMessages > 0 && props.setMessageRead();
+
     function onSubmit(e) {
         e.preventDefault();
         props.chat.sendMessage(document.getElementById('text').value);
@@ -265,8 +313,12 @@ function ChatComponent(props) {
     const messages = props.messages.map((msg, key) => {
         return (
             <div key={key} className="chat-message">
-                <span className="chat-message__username">&lt;{msg.username}&gt;</span>
-                <span className="chat-message__text">{msg.text}</span>
+                <span className="chat-message__username">
+                    &lt;{props.usernames[msg.playerId]}&gt;
+                </span>
+                <span className="chat-message__text">
+                    {msg.text}
+                </span>
             </div>
         );
     });
@@ -276,7 +328,11 @@ function ChatComponent(props) {
                 variant="dark"
                 size="lg"
                 className="chat-button"
-                onClick={() => setVisible(!visible)}>Chat</Button>
+                onClick={() => setVisible(!visible)}>Chat
+            {props.unreadMessages > 0 &&
+                <Badge pill variant="warning">{props.unreadMessages}</Badge>
+            }
+        </Button>
         <div className={"chat" + (visible ? " visible" : "")}>
             <div className="chat-messages" id="chat-messages">
                 {messages}

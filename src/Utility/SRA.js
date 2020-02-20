@@ -1,6 +1,8 @@
 const bigInt = require('big-integer');
 
-
+/**
+ * Gestione della criptazione/decriptazione tramite RSA simmetrico.
+ */
 class SRA {
     /**
      * @var {bigInt}

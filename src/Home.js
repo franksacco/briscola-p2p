@@ -8,6 +8,9 @@ import RoomList from "./RoomList";
 import Waiting from "./Waiting";
 import Form from "react-bootstrap/Form";
 
+/**
+ * Pagina iniziale dopo aver effettuato il login.
+ */
 class Home extends React.Component {
     constructor(props) {
         super(props);
@@ -49,11 +52,15 @@ class Home extends React.Component {
                              back={() => this.back()} />;
 
         } else if (this.state.room) {
-            return <Waiting as="master"
-                            username={this.props.username}
-                            peer={this.peer}
-                            room={this.state.room}
-                            back={() => this.back()}/>;
+            return (
+                <Waiting
+                    master={true}
+                    username={this.props.username}
+                    peer={this.peer}
+                    room={this.state.room}
+                    back={() => this.back()}
+                />
+            );
         }
 
         return (

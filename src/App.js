@@ -5,7 +5,9 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Home from "./Home";
 
-
+/**
+ * Pagina di Login.
+ */
 class App extends React.Component {
     constructor(props) {
         super(props);

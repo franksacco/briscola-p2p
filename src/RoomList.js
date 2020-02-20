@@ -6,13 +6,15 @@ import Button from "react-bootstrap/Button";
 import Waiting from "./Waiting";
 import Alert from "react-bootstrap/Alert";
 
-
+/**
+ * Visualizzazione e partecipazione alle partire disponibili.
+ */
 class RoomList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            waiting: false, // Waiting for game start.
-            loading: true,  // Loading room list.
+            waiting: false, // Attesa per l'inizio della partita.
+            loading: true,  // Caricamento delle partite disponibili.
             error: null,
             rooms: []
         };
@@ -29,7 +31,12 @@ class RoomList extends React.Component {
     }
 
     onClickJoin(room) {
-        let conn = this.props.peer.connect(room.masterId);
+        // Connessione con il master peer inviando come
+        // metadata il proprio username.
+        let conn = this.props.peer.connect(room.masterId, {
+            metadata: {username: this.props.username}
+        });
+
         conn.on('open', () => {
             console.log("Connected with master " + conn.peer);
             this.setState({
@@ -37,6 +44,7 @@ class RoomList extends React.Component {
                 connection: conn
             });
         });
+
         conn.on('error', (error) => {
             console.log(error);
         });
@@ -46,7 +54,7 @@ class RoomList extends React.Component {
         if (this.state.waiting) {
             return (
                 <Waiting
-                    as="slave"
+                    master={false}
                     username={this.props.username}
                     peer={this.props.peer}
                     masterConn={this.state.connection}

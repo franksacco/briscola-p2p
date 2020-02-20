@@ -10,7 +10,9 @@ import Deck from "./Deck";
 import SRA from "./SRA";
 import Card from "./Card";
 
-
+/**
+ * Partita "sicura" tramite applicazione dell'algoritmo Mental Poker.
+ */
 class SecureMatch extends Match {
     /**
      * Lista delle carte criptate aggiornata turno per turno.
@@ -36,8 +38,9 @@ class SecureMatch extends Match {
     /**
      * Gestione della ricezione di un messaggio.
      * @param message {{type: number, data: *}}
+     * @protected
      */
-    handleMessage(message) {
+    _handleMessage(message) {
         switch (message.type) {
             case TYPE_PRIMES_AGREEMENT:
                 this._sra = new SRA(
@@ -59,7 +62,7 @@ class SecureMatch extends Match {
                 break;
 
             default:
-                super.handleMessage(message);
+                super._handleMessage(message);
         }
     }
 

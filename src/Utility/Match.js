@@ -2,7 +2,9 @@ import Card, {PlayedCard} from "./Card";
 import Deck from "./Deck";
 import {TYPE_CARD_PLAYED, TYPE_INIT_DECK, TYPE_MALICIOUS_PEER} from "./MessageTypes";
 
-
+/**
+ * Gestione della logica di una partita.
+ */
 class Match {
     /**
      * Riferimento alla GameBoard.
@@ -86,7 +88,7 @@ class Match {
         this._id = this._calculateMyId();
 
         this._otherPeers.forEach(peer => {
-            this.handleConnection(peer.connection);
+            this._handleConnection(peer.connection);
         });
     }
 
@@ -106,14 +108,23 @@ class Match {
     }
 
     /**
+     * Restituisce il proprio ID.
+     * @return {number}
+     */
+    getMyId() {
+        return this._id;
+    }
+
+    /**
      * Setup dei listener per gli eventi della connessione.
      * @param connection {DataConnection}
+     * @private
      */
-    handleConnection(connection) {
+    _handleConnection(connection) {
         // Gestione della ricezione di dati.
         connection.on('data', data => {
             const msg = JSON.parse(data);
-            this.handleMessage(msg);
+            this._handleMessage(msg);
         });
 
         // Gestione degli errori della connessione.
@@ -133,8 +144,9 @@ class Match {
     /**
      * Gestione della ricezione di un messaggio.
      * @param message {{type: number, data: *}}
+     * @protected
      */
-    handleMessage(message) {
+    _handleMessage(message) {
         switch (message.type) {
             case TYPE_INIT_DECK:
                 this._initMatch(message.data);
@@ -156,12 +168,14 @@ class Match {
                 // Calcolo prossimo giocatore.
                 this._roundOf = (this._roundOf + 1) % (this._otherPeers.length + 1);
                 // Controlliamo se la mano è terminata.
+                let roundTerminated = false;
                 if (this._roundCards.length === this._otherPeers.length + 1) {
                     this._roundEnd();
+                    roundTerminated = true;
                 }
                 // Controlliamo se è il mio turno per giocare.
                 if (this._roundOf === this._id) {
-                    this._board.setIsMyRound();
+                    this._board.setIsMyRound(roundTerminated);
                 }
                 break;
 
@@ -260,12 +274,14 @@ class Match {
         // Calcolo prossimo giocatore.
         this._roundOf = (this._roundOf + 1) % (this._otherPeers.length + 1);
         // Controlliamo se la mano è terminata.
+        let roundTerminated = false;
         if (this._roundCards.length === this._otherPeers.length + 1) {
             this._roundEnd();
+            roundTerminated = true;
         }
         // Controlliamo se è il mio turno per giocare.
         if (this._id === this._roundOf) {
-            this._board.setIsMyRound();
+            this._board.setIsMyRound(roundTerminated);
         }
     }
 

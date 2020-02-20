@@ -1,3 +1,7 @@
+/*
+ * Definizione dei tipi di messaggi scmabiati.
+ */
+
 export const TYPE_PRIMES_AGREEMENT = 0;
 export const TYPE_PLAYERS_READY    = 1;
 export const TYPE_CRYPTO_DECK      = 2;

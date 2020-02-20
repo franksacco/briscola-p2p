@@ -15,6 +15,7 @@
     border-radius: calc(4px + .5vh);
     box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
     -webkit-box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+    z-index: 1;
 }
 
 .board .state {
@@ -25,7 +26,7 @@
     color: white;
     font-size: 1.25rem;
     border-radius: 1.625em;
-    z-index: 5;
+    z-index: 4;
 }
 
 .board .deck {
@@ -69,6 +70,22 @@
     align-items: center;
     justify-content: center;
 }
+.board .played-cards .card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.board .played-cards .card-container .card-player {
+    transform: translateY(-50%);
+    padding: 1rem;
+    border-radius: 1.5rem;
+    background-color: rgba(0, 0, 0, .7);
+    font-size: calc(.75rem + 0.5vh);
+    font-weight: bold;
+    line-height: calc(.75rem + 0.5vh);
+    z-index: 2;
+}
 
 .board .my-cards {
     position: absolute;
@@ -85,6 +102,7 @@
     top: 2vmin;
     right: 2vmin;
 }
+.board .chat-button .badge {margin-left: 8px;}
 
 .board .chat {
     display: none;
@@ -95,6 +113,7 @@
     padding: 16px;
     background-color: rgba(0, 0, 0, .85);
     border-radius: 8px;
+    z-index: 5;
 }
 .board .chat.visible {display: block}
 
@@ -103,14 +122,11 @@
     overflow: auto;
     font-size: 14px;
 }
-
 .board .chat .chat-messages .chat-message {margin: 4px 0;}
-
 .board .chat .chat-messages .chat-message .chat-message__username {
     color: #8BC34A;
     font-weight: bold;
     margin-right: 12px;
 }
 .board .chat .chat-messages .chat-message .chat-message__text {}
-
 .board .chat .chat-footer {margin-top: 16px;}

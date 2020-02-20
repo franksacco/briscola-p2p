@@ -97,7 +97,10 @@ const IMAGES = {
         img_3_5, img_3_6, img_3_7, img_3_8, img_3_9]
 };
 
-class Card {
+/**
+ * Descrizione e rappresentazione di una carta di gioco.
+ */
+export default class Card {
     /**
      * @var {number}
      * @private
@@ -192,8 +195,10 @@ class Card {
         return IMAGES[this._seed][this._value];
     }
 }
-export default Card;
 
+/**
+ * Carta di gioco messa in campo da un utente.
+ */
 export class PlayedCard extends Card {
     /**
      * @var {number}
