@@ -53,7 +53,7 @@ export default class Chat {
         connection.on('data', data => {
             const msg = JSON.parse(data);
             if (msg.type === TYPE_CHAT_MESSAGE) {
-                this._board.addMessage(playerId, msg.data.text);
+                this._board.addMessage(playerId, msg.data);
             }
         });
     }
@@ -65,10 +65,7 @@ export default class Chat {
     sendMessage(text) {
         const msg = {
             type: TYPE_CHAT_MESSAGE,
-            data: {
-                playerId: this._playerId,
-                text: text
-            }
+            data: text
         };
         this._board.addMessage(this._playerId, text);
         this._otherPeers.forEach(peer => {
