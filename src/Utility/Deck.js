@@ -1,6 +1,8 @@
 import Card from "./Card";
 
-
+/**
+ * Collezione di metodi statici per la gestione del mazzo.
+ */
 class Deck {
     /**
      * Genera il mazzo delle carte.
@@ -8,7 +10,7 @@ class Deck {
      */
     static create() {
         let deck = [];
-        for (let i = 1; i <= 40; i++) {
+        for (let i = 2; i <= 41; i++) {
             deck.push(new Card(i));
         }
         return deck;

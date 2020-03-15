@@ -130,13 +130,13 @@ export default class Card {
      * @param id {number}
      */
     constructor(id) {
-        if (id < 1 || id > 40) {
+        if (id < 2 || id > 41) {
             throw new Error('Invalid card ID');
         }
         this._id = id;
-        this._seed = Math.floor((id - 1) / 10);
-        this._value = VALUES_MAP[(id - 1) % 10];
-        this._score = SCORES_MAP[(id - 1) % 10];
+        this._seed = Math.floor((id - 2) / 10);
+        this._value = VALUES_MAP[(id - 2) % 10];
+        this._score = SCORES_MAP[(id - 2) % 10];
     }
 
     /**
