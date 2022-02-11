@@ -5,7 +5,7 @@
   "dependencies": {
     "big-integer": "^1.6.48",
     "bootstrap": "^4.4.1",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "node-sass": "^7.0.0",
     "peerjs": "^1.2.0",
     "react": "^16.12.0",
